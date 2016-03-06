@@ -1,3 +1,5 @@
+import logging
+
 from django import template
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import six
@@ -7,6 +9,8 @@ from compressor.cache import (cache_get, cache_set, get_offline_hexdigest,
 from compressor.conf import settings
 from compressor.exceptions import OfflineGenerationError
 from compressor.utils import get_class
+
+logger = logging.getLogger(__name__)
 
 register = template.Library()
 
@@ -83,7 +87,14 @@ class CompressorMixin(object):
 
         # See if it has been rendered offline
         if self.is_offline_compression_enabled(forced) and not forced:
-            return self.render_offline(context)
+            try:
+              return self.render_offline(context)
+            except OfflineGenerationError as exc:
+                # Do not raise an error and use online as fallback, there are
+                # few limitations in offlinee such as multiple inheritance and 
+                # variables in extends with multiple contexts. At least we use
+                # offline for the rest
+                logger.warning('Offline compression failed, fallback to online: %s' % exc.message)
 
         # Take a shortcut if we really don't have anything to do
         if (not settings.COMPRESS_ENABLED and
