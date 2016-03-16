@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from copy import copy
 
+from django.conf import settings
 from django import template
 from django.template import Context
 from django.template.base import Node, VariableNode, TextNode, NodeList
@@ -119,7 +120,7 @@ class DjangoParser(object):
     def get_nodelist(self, node, original):
         if isinstance(node, ExtendsNode):
             try:
-                context = Context()
+                context = Context(dict(settings.COMPRESS_OFFLINE_CONTEXT))
                 context.template = original
                 # TODO: We are passing an empty context when finding base
                 # templates. This does not work when extending using
